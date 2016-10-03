@@ -1,25 +1,29 @@
 require 'ckick/nil_class'
 require 'ckick/dir'
 require 'ckick/executable'
+require "ckick/library"
 
 module CKick
 
   class SubDirectory
 
-    attr_reader :name, :parent_dir, :sub_directories, :executables, :has_cmake
+    attr_reader :name, :parent_dir, :sub_directories, :has_cmake
 
     def initialize args
       @name = args[:name]
 
       @has_cmake = args[:has_cmake].nil? || args[:has_cmake]
 
-      @executables = []
+      @targets = []
+      args[:libraries].each do |lib|
+        @targets << Library.new(lib)
+      end
       args[:executables].each do |exe|
-        @executables << Executable.new(exe)
+        @targets << Executable.new(exe)
       end
 
-      if !@executables.empty? && !@has_cmake
-        raise "A subdirectory not containing a CMakeLists cannot contain executables."
+      if !@targets.empty? && !@has_cmake
+        raise "A subdirectory not containing a CMakeLists cannot contain targets."
       end
 
       @sub_directories = []
@@ -46,7 +50,7 @@ module CKick
         file << cmake
         file.close
 
-        @executables.each do |exe|
+        @targets.each do |exe|
           exe.create_structure
         end
       end
@@ -59,7 +63,7 @@ module CKick
     def cmake
       res = ''
 
-      @executables.each do |exe|
+      @targets.each do |exe|
         res << exe.cmake << "\n"
       end
 
@@ -77,7 +81,7 @@ module CKick
     def set_parent(parent_dir)
       @parent_dir = parent_dir
 
-      @executables.each do |exe|
+      @targets.each do |exe|
         exe.__send__ :set_parent, path
       end
 
