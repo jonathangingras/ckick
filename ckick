@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+$LOAD_PATH << File.absolute_path(File.join(File.dirname(__FILE__), 'src'))
+
+require "ckick/project"
+require "ckick/plugin"
+require "ckick/find_plugin"
+require "ckick/load_ckickfile"
+
+CKick::load_builtin_plugins
+
+def main
+  project = CKick::Project.new(CKick::load_ckickfile)
+
+  project.create_structure
+end
+
+main
