@@ -9,6 +9,8 @@ require "ckick/load_ckickfile"
 CKick::load_builtin_plugins
 
 def main
+  Dir.chdir(ARGV[0] || Dir.pwd)
+
   project = CKick::Project.new(CKick::load_ckickfile)
 
   project.create_structure

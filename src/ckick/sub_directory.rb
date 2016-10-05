@@ -67,10 +67,12 @@ module CKick
         res << exe.cmake << "\n"
       end
 
-      res << "\n"
+      unless @sub_directories.empty?
+        res << "\n"
 
-      @sub_directories.each do |subdir|
-        res << "add_subdirectory(#{subdir.name})\n"
+        @sub_directories.each do |subdir|
+          res << "add_subdirectory(#{subdir.name})\n"
+        end
       end
 
       res

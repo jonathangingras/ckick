@@ -14,4 +14,4 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/gtest/src/libgtest/googlemock/i
 link_directories("${CMAKE_CURRENT_BINARY_DIR}/gtest/src/libgtest-build/googlemock/gtest")
 link_directories("${CMAKE_CURRENT_BINARY_DIR}/gtest/src/libgtest-build/googlemock")
 
-set(GTEST_LIBRARIES pthread gtest gtest_main)
+set(GTEST_LIBRARIES gtest gtest_main gmock gmock_main pthread)
