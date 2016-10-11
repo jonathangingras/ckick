@@ -1,8 +1,7 @@
 # CKick
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ckick`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+CKick is a simple gem that helps to kick start a C/C++ project using CMake with an arbitrary structure.
+Using a `CKickfile`, ckick is able to generate an whole project structure without having to write any `CMakeLists.txt` by your own.
 
 ## Installation
 
@@ -22,7 +21,9 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+    $ cd your/c_cxx/project/path
+    # edit CKickfile
+    $ ckick
 
 ## Development
 
@@ -32,5 +33,4 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/ckick.
-
+Bug reports and pull requests are welcome on GitHub at https://github.com/jonathangingras/ckick.
