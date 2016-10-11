@@ -2,17 +2,17 @@ require 'ckick/target'
 
 module CKick
 
-  class Library < Target
+  class Executable < Target
     def cmake
-      res = ''
+      res = []
 
-      res << "add_library(#{@name} #{@source_file.join(' ')})\n\n"
+      res << "add_executable(#{@name} #{@source_file.join(' ')})"
 
       unless @libs.empty?
         res << "target_link_libraries(#{@name} #{@libs.join(' ')})"
       end
 
-      res
+      res.join('\n')
     end
   end
 

@@ -1,10 +1,8 @@
 #!/usr/bin/env ruby
-$LOAD_PATH << File.absolute_path(File.join(File.dirname(__FILE__), 'src'))
+lib = File.join(File.dirname(File.dirname(__FILE__)), 'lib')
+$LOAD_PATH << lib unless $LOAD_PATH.include?(lib)
 
-require "ckick/project"
-require "ckick/plugin"
-require "ckick/find_plugin"
-require "ckick/load_ckickfile"
+require "ckick"
 
 CKick::load_builtin_plugins
 

@@ -1,0 +1,38 @@
+{
+    "name": "",
+    "cmake_min_version": "3.0",
+
+    "root": ".",
+
+    "dependencies": {
+        "cxxflags": ["-std=c++11", "-O3"]
+    },
+
+    "plugins": [
+        {
+            "name": "ClangComplete"
+        },
+        {
+            "name": "GTest"
+        }
+    ],
+
+    "subdirs": [
+        {
+            "name": "include",
+            "has_cmake": false
+        },
+        {
+            "name": "src",
+            "executables": [
+                {
+                    "name": "main",
+                    "source": "main.cc"
+                }
+            ]
+        },
+        {
+            "name": "test"
+        }
+    ]
+}

@@ -1,4 +1,5 @@
 require "ckick/plugin"
+require "fileutils"
 
 class GTest < CKick::Plugin
   LIBS_VARIABLE = "${GTEST_LIBRARIES}"
@@ -31,6 +32,7 @@ class GTest < CKick::Plugin
       File.join(project.build_dir, "gtest", "src", "libgtest", "googletest", "include"),
       File.join(project.build_dir, "gtest", "src", "libgtest", "googlemock", "include")
     ].each do |path|
+      FileUtils.mkdir_p path
       res << CKick::IncludePath.new(path: path)
     end
     res

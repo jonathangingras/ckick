@@ -1,7 +1,7 @@
 require 'ckick/nil_class'
-require 'ckick/dir'
 require 'ckick/executable'
 require "ckick/library"
+require "fileutils"
 
 module CKick
 
@@ -43,7 +43,7 @@ module CKick
     end
 
     def create_structure
-      Dir.mkdirp path
+      FileUtils.mkdir_p path
 
       if @has_cmake
         file = File.new(File.join(path, "CMakeLists.txt"), 'w')
