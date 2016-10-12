@@ -12,7 +12,7 @@ module CKick
         res << "target_link_libraries(#{@name} #{@libs.join(' ')})"
       end
 
-      res.join('\n')
+      res.join("\n")
     end
   end
 
