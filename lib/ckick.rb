@@ -34,6 +34,9 @@ module CKick
   class BadLibraryPathError < Error
   end
 
+  class BadSubDirectoryError < Error
+  end
+
   class NoParentDirError < Error
   end
 end

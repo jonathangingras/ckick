@@ -2,16 +2,60 @@
 lib = File.join(File.dirname(File.dirname(__FILE__)), 'lib')
 $LOAD_PATH << lib unless $LOAD_PATH.include?(lib)
 
+require "fileutils"
 require "ckick"
 
-CKick::load_builtin_plugins
+def new_
+  raise "bad usage" if ARGV[1].nil?
+  raise "file or directory already exists" if Dir.exist?(ARGV[1])
+  raise "bad project name containing non-alphanumeric characters" unless ARGV[1].match(/^[[A-z][0-9]]+$/)
+
+  FileUtils.mkdir_p(ARGV[1])
+  Dir.chdir(ARGV[1])
+
+
+end
+
+def kick_
+  if !ARGV[0].nil? && ARGV[0] == "kick"
+    raise "no such directory: #{ARGV[0]}" unless Dir.exist?(ARGV[1])
+    Dir.chdir(ARGV[1])
+  elsif ARGV.size == 0 || Dir.exist?(ARGV[0])
+  else
+    raise "bad usage"
+  end
+  project = CKick::Project.new(CKick::load_ckickfile)
+  project.create_structure
+end
+
+COMMANDS = {
+  kick: method(:kick_),
+  new: method(:new_),
+  #build: method(:build_)
+}
 
 def main
-  Dir.chdir(ARGV[0] || Dir.pwd)
+  command = :kick
 
-  project = CKick::Project.new(CKick::load_ckickfile)
+  if ARGV.size == 1
+    if COMMANDS.include?(ARGV[0].to_sym)
+      if Dir.exist?(ARGV[0])
+        raise "first argument `#{ARGV[0]}' is ambiguous: a directory entry and a command exist with this name"
+      else
+        command = ARGV[0].to_sym
+      end
+    else
+      raise "no such directory: #{ARGV[0]}" unless Dir.exist?(ARGV[0])
+      Dir.chdir(ARGV[0])
+    end
+  elsif ARGV.size > 1
+    raise "no such command: #{ARGV[0]}" unless COMMANDS.include?(ARGV[0].to_sym)
+    command = ARGV[0].to_sym
+  end
 
-  project.create_structure
+  CKick::load_builtin_plugins
+
+  COMMANDS[command].call
 end
 
 main

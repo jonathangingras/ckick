@@ -9,25 +9,35 @@ module CKick
 
     attr_reader :name, :parent_dir, :sub_directories, :has_cmake
 
-    def initialize args
-      @name = args[:name]
+    def initialize args={}
+      name = args[:name]
+      raise IllegalInitializationError, "no name provided to sub directory" unless name.is_a?(String) && !name.empty?
+      libs = args[:libraries]
+      raise IllegalInitializationError, ":libraries argument is not an Array" unless libs.is_a?(Array) || libs.nil?
+      exes = args[:executables]
+      raise IllegalInitializationError, ":executables argument is not an Array" unless exes.is_a?(Array) || exes.nil?
+      subdirs = args[:subdirs]
+      raise IllegalInitializationError, ":subdirs is not an Array" unless subdirs.is_a?(Array) || subdirs.nil?
 
-      @has_cmake = args[:has_cmake].nil? || args[:has_cmake]
+      has_cmake = args[:has_cmake].nil? || args[:has_cmake]
+
+      if (!exes.nil? || !libs.nil?) && !has_cmake
+        raise BadSubDirectoryError, "A subdirectory not containing a CMakeLists cannot contain targets."
+      end
+
+      @name = name
+      @has_cmake = has_cmake
 
       @targets = []
-      args[:libraries].each do |lib|
+      libs.each do |lib|
         @targets << Library.new(lib)
       end
-      args[:executables].each do |exe|
+      exes.each do |exe|
         @targets << Executable.new(exe)
       end
 
-      if !@targets.empty? && !@has_cmake
-        raise "A subdirectory not containing a CMakeLists cannot contain targets."
-      end
-
       @sub_directories = []
-      args[:subdirs].each do |subdir|
+      subdirs.each do |subdir|
         @sub_directories << SubDirectory.new(subdir)
       end
 
@@ -39,6 +49,7 @@ module CKick
     end
 
     def path
+      raise NoParentDirError, "sub directory #{@name} has no parent set" unless @parent_dir
       File.join(@parent_dir, @name)
     end
 
@@ -63,16 +74,13 @@ module CKick
     def cmake
       res = ''
 
-      @targets.each do |exe|
-        res << exe.cmake << "\n"
-      end
+      res << @targets.collect { |t| t.cmake }.join("\n")
 
       unless @sub_directories.empty?
         res << "\n"
-
-        @sub_directories.each do |subdir|
-          res << "add_subdirectory(#{subdir.name})\n"
-        end
+        res << @sub_directories.collect do |subdir|
+          "add_subdirectory(#{subdir.name})"
+        end.join("\n")
       end
 
       res
