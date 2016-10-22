@@ -197,3 +197,9 @@ describe CKick::Dependencies, '#add_lib' do
     expect {CKick::Dependencies.new().add_lib(mock)}.not_to raise_error
   end
 end
+
+describe CKick::Dependencies, '#to_hash' do
+  it "does not output empty values" do
+    expect(CKick::Dependencies.new().to_hash.keys).not_to include([])
+  end
+end

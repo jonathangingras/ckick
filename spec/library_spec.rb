@@ -17,3 +17,13 @@ describe CKick::Library, '#cmake' do
     expect(CKick::Library.new(name: "somename", source: ["somesource1", "somesource2"], libs: ["somelib1", "somelib2"]).cmake).to eq(%Q{add_library(somename somesource1 somesource2)\ntarget_link_libraries(somename somelib1 somelib2)})
   end
 end
+
+describe CKick::Library, '#to_hash' do
+  it "does not output a hash containing :shared when shared false" do
+    expect(CKick::Library.new(name: "somename", source: ["somesource1", "somesource2"]).to_hash.keys).not_to include(:shared)
+  end
+
+  it "does output a hash containing :shared when shared true" do
+    expect(CKick::Library.new(name: "somename", source: ["somesource1", "somesource2"], shared: true).to_hash.keys).to include(:shared)
+  end
+end

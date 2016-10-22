@@ -49,3 +49,9 @@ describe CKick::CompilerFlag, 'uniqueness' do
     expect(array[0].raw_flag).to eq(FLAG_CONTENT)
   end
 end
+
+describe CKick::CompilerFlag, '#to_hash_element' do
+  it "outputs @content as is" do
+    expect(CKick::CompilerFlag.new(flag: FLAG_CONTENT).to_hash_element).to eq(FLAG_CONTENT)
+  end
+end

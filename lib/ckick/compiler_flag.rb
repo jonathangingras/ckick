@@ -15,6 +15,10 @@ module CKick
       @content
     end
 
+    def to_hash_element
+      @content
+    end
+
     def raw_flag
       @content
     end

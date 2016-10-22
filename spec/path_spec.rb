@@ -42,3 +42,12 @@ describe CKick::Path, '#to_s' do
     expect(path.to_s).to eq(dirpath)
   end
 end
+
+describe CKick::Path, '#to_hash_element' do
+  dirpath = File.dirname(__FILE__)
+  path = CKick::Path.new(path: dirpath)
+
+  it "outputs path as is" do
+    expect(path.to_hash_element).to eq(dirpath)
+  end
+end

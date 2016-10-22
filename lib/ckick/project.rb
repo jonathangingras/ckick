@@ -2,17 +2,19 @@ require 'ckick/nil_class'
 require 'ckick/dir'
 require 'ckick/dependencies'
 require 'ckick/sub_directory'
+require "ckick/hashable"
+require "pathname"
 
 module CKick
 
   class Project
+    include Hashable
     attr_reader :sub_directories, :dependencies, :root, :build_dir
 
     def initialize args
       @name = args[:name]
-      @subdirs_initiated = false
 
-      @build_dir = args[:build_dir] || 'build'
+      @subdirs_initiated = false
 
       if args[:cmake_min_version].nil?
         @cmake_min_version = '3'
@@ -20,26 +22,37 @@ module CKick
         @cmake_min_version = args[:cmake_min_version]
       end
 
-      @root = File.absolute_path(args[:root]) || File.join(Dir.pwd, @name)
-      @dependencies = Dependencies.new(args[:dependencies])
+      root = args[:root] || Dir.pwd
+      @root = Pathname.new(File.absolute_path(root)).relative_path_from(Pathname.pwd).to_s
 
-      @sub_directories = []
-      args[:subdirs].each do |subdir|
-        @sub_directories << SubDirectory.new(subdir)
-      end
+      @build_dir = args[:build_dir] || 'build'
+
+      @dependencies = Dependencies.new(args[:dependencies])
 
       @plugins = []
       args[:plugins].each do |plugin|
         @plugins << Object.const_get(plugin[:name]).new(plugin[:args] || {})
       end
 
-      init_subdirs
+      @subdirs = []
+      args[:subdirs].each do |subdir|
+        @subdirs << SubDirectory.new(subdir)
+      end
 
-      @ckickfile = args
+      init_subdirs
+    end
+
+    def set_name(name)
+      raise BadProjectNameError, "project name must be a non-empty alphanumeric string" unless name.is_a?(String) && name.match(/^[[A-z][0-9]]+$/)
+      @name = name
     end
 
     def to_s
       @name
+    end
+
+    def to_hash
+      to_no_empty_value_hash.without(:subdirs_initiated)
     end
 
     def path
@@ -57,7 +70,7 @@ module CKick
       file << cmake
       file.close
 
-      @sub_directories.each do |subdir|
+      @subdirs.each do |subdir|
         subdir.create_structure
       end
 
@@ -84,7 +97,7 @@ module CKick
 
       res << plugins_cmake unless @plugins.empty?
 
-      @sub_directories.each do |dir|
+      @subdirs.each do |dir|
         res << "add_subdirectory(#{dir.name})\n" unless !dir.has_cmake
       end
 
@@ -94,7 +107,7 @@ module CKick
     private
 
     def init_subdirs
-      @sub_directories.each do |subdir|
+      @subdirs.each do |subdir|
         subdir.__send__ :set_parent, path
       end
 

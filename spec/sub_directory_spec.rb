@@ -229,3 +229,17 @@ describe CKick::SubDirectory, '#set_parent' do
   end
 
 end
+
+describe CKick::SubDirectory, '#to_hash' do
+  it "does not output a hash containing :parent_dir key" do
+    expect(CKick::SubDirectory.new(name: "somedir").to_hash.keys).not_to include(:parent_dir)
+  end
+
+  it "does not output a hash containing :has_cmake key when has_cmake is true" do
+    expect(CKick::SubDirectory.new(name: "somedir", has_cmake: true).to_hash.keys).not_to include(:has_cmake)
+  end
+
+  it "does output a hash containing :has_cmake when key has_cmake is false" do
+    expect(CKick::SubDirectory.new(name: "somedir", has_cmake: false).to_hash.keys).to include(:has_cmake)
+  end
+end

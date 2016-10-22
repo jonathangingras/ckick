@@ -2,12 +2,14 @@ require 'ckick/nil_class'
 require 'ckick/executable'
 require "ckick/library"
 require "fileutils"
+require "ckick/hashable"
 
 module CKick
 
   class SubDirectory
+    include Hashable
 
-    attr_reader :name, :parent_dir, :sub_directories, :has_cmake
+    attr_reader :name, :parent_dir, :has_cmake
 
     def initialize args={}
       name = args[:name]
@@ -28,17 +30,18 @@ module CKick
       @name = name
       @has_cmake = has_cmake
 
-      @targets = []
+      @libraries = []
       libs.each do |lib|
-        @targets << Library.new(lib)
+        @libraries << Library.new(lib)
       end
+      @executables = []
       exes.each do |exe|
-        @targets << Executable.new(exe)
+        @executables << Executable.new(exe)
       end
 
-      @sub_directories = []
+      @subdirs = []
       subdirs.each do |subdir|
-        @sub_directories << SubDirectory.new(subdir)
+        @subdirs << SubDirectory.new(subdir)
       end
 
       @parent_dir = nil
@@ -46,6 +49,13 @@ module CKick
 
     def to_s
       @name
+    end
+
+    def to_hash
+      if !@has_cmake
+        return to_no_empty_value_hash.without(:parent_dir)
+      end
+      to_no_empty_value_hash.without(:parent_dir, :has_cmake)
     end
 
     def path
@@ -61,12 +71,12 @@ module CKick
         file << cmake
         file.close
 
-        @targets.each do |exe|
-          exe.create_structure
+        targets.each do |t|
+          t.create_structure
         end
       end
 
-      @sub_directories.each do |subdir|
+      @subdirs.each do |subdir|
         subdir.create_structure
       end
     end
@@ -74,11 +84,11 @@ module CKick
     def cmake
       res = ''
 
-      res << @targets.collect { |t| t.cmake }.join("\n")
+      res << targets.collect { |t| t.cmake }.join("\n")
 
-      unless @sub_directories.empty?
+      unless @subdirs.empty?
         res << "\n"
-        res << @sub_directories.collect do |subdir|
+        res << @subdirs.collect do |subdir|
           "add_subdirectory(#{subdir.name})"
         end.join("\n")
       end
@@ -88,14 +98,18 @@ module CKick
 
     private
 
+    def targets
+      @executables + @libraries
+    end
+
     def set_parent(parent_dir)
       @parent_dir = parent_dir
 
-      @targets.each do |exe|
-        exe.__send__ :set_parent, path
+      targets.each do |t|
+        t.__send__ :set_parent, path
       end
 
-      @sub_directories.each do |subdir|
+      @subdirs.each do |subdir|
         subdir.__send__ :set_parent, path
       end
     end

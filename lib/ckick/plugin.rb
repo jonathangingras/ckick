@@ -9,6 +9,11 @@ module CKick
       self.class.name
     end
 
+    # Plugin to hash is :name => "class name"
+    def to_hash
+      {name: self.class.name}
+    end
+
     # Plugin's output to add to main CMakeLists.txt
     def cmake
       ""

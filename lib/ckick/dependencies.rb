@@ -3,18 +3,21 @@ require 'ckick/cflag'
 require 'ckick/cxxflag'
 require 'ckick/include_path'
 require 'ckick/library_path'
+require "ckick/hashable"
 
 module CKick
 
   class Dependencies
+    include Hashable
+
     def initialize args={}
       raise IllegalInitializationError unless args.is_a?(Hash)
 
       cflags = args[:cflags] || []
-      raise IllegalInitializationError, "cflags provided to dependencied is not an Array" unless cflags.is_a?(Array)
+      raise IllegalInitializationError, "cflags provided to dependencies is not an Array" unless cflags.is_a?(Array)
       @cflags = cflags.collect do |flag|
         CFlag.new(flag: flag)
-      end
+        end
 
       cxxflags = args[:cxxflags] || []
       raise IllegalInitializationError, "cxxflags provided to dependencied is not an Array" unless cxxflags.is_a?(Array)
@@ -23,33 +26,37 @@ module CKick
       end
 
       includes = args[:include] || []
-      raise IllegalInitializationError, "include provided to dependencied is not an Array" unless includes.is_a?(Array)
-      @includes = includes.collect do |include|
+      raise IllegalInitializationError, "include provided to dependencies is not an Array" unless includes.is_a?(Array)
+      @include = includes.collect do |include|
         IncludePath.new(path: include)
       end
 
       libs = args[:lib] || []
-      raise IllegalInitializationError, "lib provided to dependencied is not an Array" unless libs.is_a?(Array)
+      raise IllegalInitializationError, "lib provided to dependencies is not an Array" unless libs.is_a?(Array)
       @lib = libs.collect do |lib|
         LibraryPath.new(path: lib)
       end
     end
 
+    def to_hash
+      to_no_empty_value_hash
+    end
+
     def cmake
-      [@cflags, @cxxflags, @includes, @lib].flatten(1).collect do |unit|
+      [@cflags, @cxxflags, @include, @lib].flatten(1).collect do |unit|
           unit.cmake
       end.join("\n")
     end
 
     def flags
-      [@cflags, @cxxflags, @includes, @lib].flatten(1).uniq.collect do |flag|
+      [@cflags, @cxxflags, @include, @lib].flatten(1).uniq.collect do |flag|
         flag.raw_flag
       end
     end
 
     def add_include(path)
       raise BadIncludePathError, "path must be a CKick::IncludePath object" unless path.is_a?(IncludePath)
-      @includes << path
+      @include << path
     end
 
     def add_lib(path)

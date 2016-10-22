@@ -3,6 +3,7 @@ lib = File.join(File.dirname(File.dirname(__FILE__)), 'lib')
 $LOAD_PATH << lib unless $LOAD_PATH.include?(lib)
 
 require "fileutils"
+require "json"
 require "ckick"
 
 def new_
@@ -13,7 +14,21 @@ def new_
   FileUtils.mkdir_p(ARGV[1])
   Dir.chdir(ARGV[1])
 
+  project = CKick::Project.new(
+    CKick::load_ckickfile(CKick::RESOURCE_DIR, "default_cxx_project.json"))
+  project.set_name(ARGV[1])
 
+  lines = JSON.pretty_generate(project.to_hash, {indent: "  "}).split("\n")
+  lines.collect! do |line|
+    if line[2] == '"'
+      line = "\n" + line
+    end
+    line
+  end
+  lines[1][0] = ""
+  file_content = lines.join("\n")
+
+  File.new("CKickfile", "w") << file_content
 end
 
 def kick_

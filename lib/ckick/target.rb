@@ -1,10 +1,13 @@
 require 'ckick/nil_class'
 require 'ckick/library_link'
 require "fileutils"
+require "ckick/hashable"
 
 module CKick
 
   class Target
+    include Hashable
+
     def initialize args={}
       raise IllegalInitializationError unless args.is_a?(Hash) && !args.empty?
 
@@ -16,9 +19,9 @@ module CKick
       if source.is_a? Array
         raise NoSourceError, "No source file provided for target #{@name}" if source.empty?
         raise BadSourceError, "Bad source file names provided for target #{@name}: #{source}" unless source.select { |el| !el.is_a?(String) }.empty?
-        @source_file = source
+        @source = source
       elsif source.is_a? String
-        @source_file = [source]
+        @source = [source]
       else
         raise BadSourceError, "Bad source file name provided for target #{@name}"
       end
@@ -39,6 +42,10 @@ module CKick
       @parent_dir = nil
     end
 
+    def to_hash
+      to_no_empty_value_hash.without(:parent_dir)
+    end
+
     def to_s
       @name
     end
@@ -46,7 +53,7 @@ module CKick
     def paths
       raise NoParentDirError, "No parent directory has been set for target #{@name}" unless @parent_dir
       res = []
-      @source_file.each do |source_file|
+      @source.each do |source_file|
         res << File.join(@parent_dir, source_file)
       end
       res

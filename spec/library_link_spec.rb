@@ -39,3 +39,9 @@ describe CKick::LibraryLink, '#cmake' do
     expect(CKick::LibraryLink.new(name: "somelib").cmake).to eq("somelib")
   end
 end
+
+describe CKick::LibraryLink, '#to_hash_element' do
+  it "outputs @name as is" do
+    expect(CKick::LibraryLink.new(name: "somelib").to_hash_element).to eq("somelib")
+  end
+end

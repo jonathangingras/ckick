@@ -156,3 +156,27 @@ describe CKick::Target, '#create_structure' do
     target.create_structure
   end
 end
+
+describe CKick::Target, '#to_hash' do
+  it "outputs all attributes without @parent_dir and without @libs when @libs empty" do
+    target = CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2'])
+
+    expect(target.to_hash).to eq({name: "somename", source: ["somesource1", "somesource2"]})
+  end
+
+  it "outputs all attributes without @parent_dir and with @libs when @libs non-empty" do
+    target = CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2'], libs: ["lib1", "lib2"])
+
+    expect(target.to_hash).to eq({name: "somename", source: ["somesource1", "somesource2"], libs: ["lib1", "lib2"]})
+  end
+end
+
+describe CKick::Target, '#to_hash' do
+  it "does not output a hash containing :parent_dir key" do
+    expect(CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2']).to_hash.keys).not_to include(:parent_dir)
+  end
+
+  it "does not output a hash containing empty values" do
+    expect(CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2']).to_hash.values).not_to include([])
+  end
+end

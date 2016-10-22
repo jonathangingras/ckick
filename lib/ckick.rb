@@ -4,6 +4,8 @@ require "ckick/find_plugin"
 require "ckick/ckickfile"
 
 module CKick
+  RESOURCE_DIR = File.join(File.dirname(File.dirname(__FILE__)), "resource")
+
   class Error < ::Exception
   end
 
@@ -20,6 +22,9 @@ module CKick
   end
 
   class NoSourceError < Error
+  end
+
+  class BadProjectNameError < Error
   end
 
   class BadSourceError < Error

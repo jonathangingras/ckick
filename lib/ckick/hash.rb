@@ -18,4 +18,12 @@ class Hash
   def array_aware_deep_symbolize_keys
     array_aware_deep_transform_keys{ |key| key.to_sym rescue key }
   end
+
+  def without(*keys)
+    dup.without!(*keys)
+  end
+
+  def without!(*keys)
+    reject! { |key| keys.include?(key) }
+  end
 end
