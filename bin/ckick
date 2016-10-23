@@ -18,7 +18,9 @@ def new_
     CKick::load_ckickfile(CKick::RESOURCE_DIR, "default_cxx_project.json"))
   project.set_name(ARGV[1])
 
-  lines = JSON.pretty_generate(project.to_hash, {indent: "  "}).split("\n")
+  h = project.to_hash
+  h[:root] = Pathname.new(File.absolute_path(project.path)).relative_path_from(Pathname.pwd).to_s
+  lines = JSON.pretty_generate(h, {indent: "  "}).split("\n")
   lines.collect! do |line|
     if line[2] == '"'
       line = "\n" + line

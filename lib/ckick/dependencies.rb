@@ -56,12 +56,12 @@ module CKick
 
     def add_include(path)
       raise BadIncludePathError, "path must be a CKick::IncludePath object" unless path.is_a?(IncludePath)
-      @include << path
+      @include << path unless @include.include?(path)
     end
 
     def add_lib(path)
       raise BadLibraryPathError, "path must be a CKick::LibraryPath object" unless path.is_a?(LibraryPath)
-      @lib << path
+      @lib << path unless @lib.include?(path)
     end
   end
 

@@ -44,4 +44,7 @@ module CKick
 
   class NoParentDirError < Error
   end
+
+  class BadFileContentError < Error
+  end
 end

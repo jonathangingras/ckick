@@ -183,6 +183,33 @@ describe CKick::Dependencies, '#add_include' do
 
     expect {CKick::Dependencies.new().add_include(mock)}.not_to raise_error
   end
+
+  it "does not append include path when path already inside" do
+    mock = instance_double("CKick::IncludePath")
+    expect(mock).to receive(:is_a?).twice.with(CKick::IncludePath).and_return true
+    expect(mock).to receive(:to_hash_element).twice.and_return "mock"
+    deps = CKick::Dependencies.new
+
+    deps.add_include(mock)
+    expect(deps.to_hash[:include].size).to eq(1)
+    deps.add_include(mock)
+    expect(deps.to_hash[:include].size).to eq(1)
+  end
+
+  it "does append include path when path not already inside" do
+    mock = instance_double("CKick::IncludePath")
+    expect(mock).to receive(:is_a?).with(CKick::IncludePath).and_return true
+    expect(mock).to receive(:to_hash_element).twice.and_return "mock"
+    mock2 = instance_double("CKick::IncludePath")
+    expect(mock2).to receive(:is_a?).with(CKick::IncludePath).and_return true
+    expect(mock2).to receive(:to_hash_element).and_return "mock2"
+    deps = CKick::Dependencies.new
+
+    deps.add_include(mock)
+    expect(deps.to_hash[:include].size).to eq(1)
+    deps.add_include(mock2)
+    expect(deps.to_hash[:include].size).to eq(2)
+  end
 end
 
 describe CKick::Dependencies, '#add_lib' do
@@ -195,6 +222,33 @@ describe CKick::Dependencies, '#add_lib' do
     expect(mock).to receive(:is_a?).with(CKick::LibraryPath).and_return true
 
     expect {CKick::Dependencies.new().add_lib(mock)}.not_to raise_error
+  end
+
+  it "does not append include path when path already inside" do
+    mock = instance_double("CKick::LibraryPath")
+    expect(mock).to receive(:is_a?).twice.with(CKick::LibraryPath).and_return true
+    expect(mock).to receive(:to_hash_element).twice.and_return "mock"
+    deps = CKick::Dependencies.new
+
+    deps.add_lib(mock)
+    expect(deps.to_hash[:lib].size).to eq(1)
+    deps.add_lib(mock)
+    expect(deps.to_hash[:lib].size).to eq(1)
+  end
+
+  it "does append include path when path not already inside" do
+    mock = instance_double("CKick::LibraryPath")
+    expect(mock).to receive(:is_a?).with(CKick::LibraryPath).and_return true
+    expect(mock).to receive(:to_hash_element).twice.and_return "mock"
+    mock2 = instance_double("CKick::LibraryPath")
+    expect(mock2).to receive(:is_a?).with(CKick::LibraryPath).and_return true
+    expect(mock2).to receive(:to_hash_element).and_return "mock2"
+    deps = CKick::Dependencies.new
+
+    deps.add_lib(mock)
+    expect(deps.to_hash[:lib].size).to eq(1)
+    deps.add_lib(mock2)
+    expect(deps.to_hash[:lib].size).to eq(2)
   end
 end
 
