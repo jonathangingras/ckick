@@ -1,4 +1,4 @@
-# CKick
+# CKick [![Build Status](https://travis-ci.org/jonathangingras/ckick.svg?branch=master)](https://travis-ci.org/jonathangingras/ckick)
 
 CKick is a simple gem that helps to kick start a C/C++ project using CMake with an arbitrary structure.
 Using a `CKickfile`, ckick is able to generate an whole project structure without having to write any `CMakeLists.txt` by your own.
