@@ -129,6 +129,7 @@ describe CKick::Project, '#create_structure' do
   end
 
   it "creates CMakeLists.txt in root directory with PathDelegate" do
+    allow(CKick::PathDelegate).to receive(:write_file).with(anything(), anything(), anything())
     allow(CKick::PathDelegate).to receive(:create_directory).with(".")
     project = CKick::Project.new(name: "someproject", root: ".", build_dir: "build")
 
@@ -138,6 +139,7 @@ describe CKick::Project, '#create_structure' do
   end
 
   it "calls each subdir #create_structure" do
+    allow(CKick::PathDelegate).to receive(:write_file).with(anything(), anything(), anything())
     sub1, sub2 = double("CKick::SubDirectory"), double("CKick::SubDirectory")
     allow(sub1).to receive_messages(set_parent: nil, has_cmake: true, name: "")
     allow(sub2).to receive_messages(set_parent: nil, has_cmake: true, name: "")
@@ -152,6 +154,7 @@ describe CKick::Project, '#create_structure' do
   end
 
   it "runs and calls each plugin" do
+    allow(CKick::PathDelegate).to receive(:write_file).with(anything(), anything(), anything())
     plugin1 = double("CKick::Plugin")
     plugin2 = double("CKick::Plugin")
     allow(CKick::PluginDelegate).to receive(:find).with(plugin1).and_return plugin1

@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
-lib = File.join(File.dirname(File.dirname(__FILE__)), 'lib')
+lib = File.join(File.dirname(File.dirname(File.realpath(__FILE__))), 'lib')
 $LOAD_PATH << lib unless $LOAD_PATH.include?(lib)
 
 require "fileutils"
 require "json"
+require "pathname"
 require "ckick"
 
 def new_

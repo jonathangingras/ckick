@@ -1,6 +1,6 @@
 require 'ckick/nil_class'
 require 'ckick/library_link'
-require "fileutils"
+require "ckick/path_delegate"
 require "ckick/hashable"
 
 module CKick
@@ -62,7 +62,7 @@ module CKick
     def create_structure
       paths.each do |path|
         unless File.exist? path
-          FileUtils.touch(path)
+          PathDelegate.touch_file(path)
         end
       end
     end

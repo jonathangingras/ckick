@@ -16,6 +16,10 @@ module CKick
       file.close
     end
 
+    def self.touch_file(filepath)
+      FileUtils.touch(filepath)
+    end
+
   end
 
 end

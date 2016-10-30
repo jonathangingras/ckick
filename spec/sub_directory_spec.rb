@@ -83,27 +83,22 @@ end
 describe CKick::SubDirectory, '#create_structure' do
 
   it "creates directory to .path" do
-    filemock = double("file like object")
-    allow(File).to receive(:new).and_return(filemock)
-    allow(filemock).to receive_messages(:<< => nil, close: nil)
+    allow(CKick::PathDelegate).to receive(:write_file).and_return(nil)
 
     dir = CKick::SubDirectory.new(name: "somedir")
     dir.__send__ :set_parent, "someparent"
 
-    expect(FileUtils).to receive(:mkdir_p).with(dir.path)
+    expect(CKick::PathDelegate).to receive(:create_directory).with(dir.path).and_return(nil)
 
     dir.create_structure
   end
 
   it "creates CMakeLists.txt in .path" do
-    filemock = double("file like object")
-    allow(filemock).to receive_messages(:<< => nil, close: nil)
-
     dir = CKick::SubDirectory.new(name: "somedir")
     dir.__send__ :set_parent, "someparent"
 
-    expect(FileUtils).to receive(:mkdir_p).with(dir.path)
-    expect(File).to receive(:new).with(File.join(dir.path, "CMakeLists.txt"), "w").and_return(filemock)
+    expect(CKick::PathDelegate).to receive(:create_directory).with(dir.path).and_return(nil)
+    expect(CKick::PathDelegate).to receive(:write_file).with(dir.path, "CMakeLists.txt", anything()).and_return(nil)
 
     dir.create_structure
   end
@@ -111,23 +106,21 @@ describe CKick::SubDirectory, '#create_structure' do
   it "does not create CMakeLists.txt when has_cmake: false" do
     dir = CKick::SubDirectory.new(name: "somedir", has_cmake: false)
     dir.__send__ :set_parent, "someparent"
+    allow(CKick::PathDelegate).to receive(:create_directory).with(dir.path).and_return(nil)
 
-    expect(File).not_to receive(:new)
+    expect(CKick::PathDelegate).not_to receive(:write_file)
 
     dir.create_structure
   end
 
   it "calls every target :create_structure" do
-    allow(FileUtils).to receive(:mkdir_p)
+    allow(CKick::PathDelegate).to receive_messages(create_directory: nil, write_file: nil)
     object1 = double(CKick::Executable.name)
     object2 = double(CKick::Library.name)
     allow(object1).to receive_messages(:set_parent => nil, :cmake => "")
     allow(object2).to receive_messages(:set_parent => nil, :cmake => "")
     expect(CKick::Executable).to receive(:new).with(object1).and_return(object1)
     expect(CKick::Library).to receive(:new).with(object2).and_return(object2)
-    filemock = double("file like object")
-    allow(File).to receive(:new).and_return(filemock)
-    allow(filemock).to receive_messages(:<< => nil, close: nil)
 
     dir = CKick::SubDirectory.new(name: "somedir", executables: [object1], libraries: [object2])
     dir.__send__ :set_parent, "someparent"
@@ -139,16 +132,13 @@ describe CKick::SubDirectory, '#create_structure' do
   end
 
   it "calls every subdirs :create_structure" do
-    allow(FileUtils).to receive(:mkdir_p)
+    allow(CKick::PathDelegate).to receive_messages(create_directory: nil, write_file: nil)
     object1 = double(CKick::SubDirectory.name)
     object2 = double(CKick::SubDirectory.name)
     allow(object1).to receive_messages(:set_parent => nil, :cmake => "", name: "")
     allow(object2).to receive_messages(:set_parent => nil, :cmake => "", name: "")
     expect(CKick::SubDirectory).to receive(:new).with(object1).and_return(object1)
     expect(CKick::SubDirectory).to receive(:new).with(object2).and_return(object2)
-    filemock = double("file like object")
-    allow(File).to receive(:new).and_return(filemock)
-    allow(filemock).to receive_messages(:<< => nil, close: nil)
 
     args = {name: "somedir", subdirs: [object1, object2]}
     expect(CKick::SubDirectory).to receive(:new).with(args).and_call_original

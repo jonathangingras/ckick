@@ -3,6 +3,7 @@ require 'ckick/executable'
 require "ckick/library"
 require "fileutils"
 require "ckick/hashable"
+require "ckick/path_delegate"
 
 module CKick
 
@@ -64,12 +65,10 @@ module CKick
     end
 
     def create_structure
-      FileUtils.mkdir_p path
+      PathDelegate.create_directory(path)
 
       if @has_cmake
-        file = File.new(File.join(path, "CMakeLists.txt"), 'w')
-        file << cmake
-        file.close
+        PathDelegate.write_file(path, "CMakeLists.txt", cmake)
 
         targets.each do |t|
           t.create_structure

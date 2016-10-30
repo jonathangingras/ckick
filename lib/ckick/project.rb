@@ -1,5 +1,4 @@
 require 'ckick/nil_class'
-require 'ckick/dir'
 require 'ckick/dependencies'
 require 'ckick/sub_directory'
 require "ckick/hashable"
@@ -108,7 +107,7 @@ module CKick
       res << plugins_cmake << "\n\n" unless @plugins.empty?
 
       @subdirs.each do |dir|
-        res << "add_subdirectory(#{dir.name})\n" unless !dir.has_cmake
+        res << "add_subdirectory(#{dir.name})\n" if dir.has_cmake
       end
 
       res
