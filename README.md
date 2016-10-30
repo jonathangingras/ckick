@@ -3,22 +3,6 @@
 CKick is a simple gem that helps to kick start a C/C++ project using CMake with an arbitrary structure.
 Using a `CKickfile`, ckick is able to generate an whole project structure without having to write any `CMakeLists.txt` by your own.
 
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'ckick'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install ckick
-
 ## Usage
 
     $ cd your/c_cxx/project/path
