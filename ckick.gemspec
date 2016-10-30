@@ -4,23 +4,14 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'ckick/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "ckick"
-  spec.version       = Ckick::VERSION
+  spec.name          = "CKick"
+  spec.version       = CKick::VERSION
   spec.authors       = ["Jonathan Gingras"]
   spec.email         = ["jonathan.gingras.1@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
-
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  if spec.respond_to?(:metadata)
-    spec.metadata['allowed_push_host'] = "TODO: Set to 'http://mygemserver.com'"
-  else
-    raise "RubyGems 2.0 or newer is required to protect against " \
-      "public gem pushes."
-  end
+  spec.summary       = %q{Kick start a C/C++ CMake project structure from a single JSON file}
+  spec.description   = %q{CKick is a simple gem that helps to kick start a C/C++ project using CMake with an arbitrary structure. Using a CKickfile (a simple JSON), ckick is able to generate an whole project structure without having to write any CMakeLists.txt by your own.}
+  spec.homepage      = "https://github.com/jonathangingras/ckick"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
