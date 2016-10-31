@@ -11,13 +11,36 @@ require "ckick/plugin_delegate"
 
 module CKick
 
+  # This class represents a CMake project (as a main CMakeLists)
   class Project
     include Hashable
-    attr_reader :subdirs, :dependencies, :root, :build_dir
 
+    # each project CKick::SubDirectory
+    attr_reader :subdirs
+
+    # project CKick::Dependencies
+    attr_reader :dependencies
+
+    # project root directory
+    attr_reader :root
+
+    # project build directory
+    attr_reader :build_dir
+
+    # project name match pattern
     NAME_MATCH = /^[[A-Z][a-z]_[0-9]]+$/
+
+    # version match
     CMAKE_VERSION_MATCH = /^[0-9](\.[0-9]){0,2}$/
 
+    # * +args+ - project hash (directly the CKickfile parsed with keys as Symbol), must be a Hash
+    # ====== Input hash keys
+    # * +:name+ - project name, must respect NAME_MATCH
+    # * +:cmake_min_version+ - CMake minimum version (must be String), defaults to '3', must match CMAKE_VERSION_MATCH
+    # * +:root+ - Project root directory, usually '.'
+    # * +:build_dir+ - Project build directory, usually 'build'
+    # * +:subdirs+ - subdirectories (in respect to CMake subdirectory() command), must be a Array of Hash passed to SubDirectory::new
+    # * +:plugins+ - Array of Hash containing {:name => CKick::Plugin class name, :args => args for respective :initialize method }
     def initialize args
       name = args[:name] || ""
       raise IllegalInitializationError, "name must be a non-empty string only containing alphanumeric characters" unless name.is_a?(String) && name.match(NAME_MATCH)
@@ -54,23 +77,28 @@ module CKick
       init_subdirs
     end
 
+    # set the project name, must match NAME_MATCH
     def set_name(name)
       raise BadProjectNameError, "project name must be a non-empty alphanumeric string" unless name.is_a?(String) && name.match(NAME_MATCH)
       @name = name
     end
 
+    # convert to String -> the project name as is
     def to_s
       @name
     end
 
+    # convert to Hash (to CKickfile)
     def to_hash
       to_no_empty_value_hash.without(:subdirs_initiated)
     end
 
+    # project root directory path
     def path
       @root
     end
 
+    # creates the project CMake structure
     def create_structure
       raise "SubDirectories have not been initiated" unless @subdirs_initiated
 
@@ -86,6 +114,7 @@ module CKick
       call_plugins
     end
 
+    # register an additionnal CKick::Plugin or block
     def register_plugin(plugin=nil, &block)
       raise ArgumentError, "" unless plugin.is_a?(::CKick::Plugin) || block
 
@@ -96,6 +125,7 @@ module CKick
       end
     end
 
+    # main project's CMakeLists.txt content
     def cmake
       append_plugin_paths
 
@@ -119,6 +149,7 @@ module CKick
 
     private
 
+    # called at the end of Project::new
     def init_subdirs
       @subdirs.each do |subdir|
         subdir.__send__ :set_parent, path
@@ -127,6 +158,7 @@ module CKick
       @subdirs_initiated = true
     end
 
+    # appends include path and library path by each CKick::Plugin#include and CKick::Plugin#lib
     def append_plugin_paths
       @plugins.each do |plugin|
         plugin.include(self).each do |path|
@@ -138,22 +170,25 @@ module CKick
       end
     end
 
+    # ran before structure creation (calls each CKick::Plugin#run)
     def run_plugins
       @plugins.each do |plugin|
         plugin.run(self) if plugin.respond_to? :run
       end
     end
 
+    # ran after structure creation (calls each CKick::Plugin#call)
     def call_plugins
       @plugins.each do |plugin|
         plugin.call self
       end
     end
 
+    # plugins CMakeLists.txt content section in main CMakeLists.txt content
     def plugins_cmake
       res = "##ckick plugins section##\n"
 
-      def plugin_name(plugin)
+      def plugin_name(plugin) #:nodoc:
         if plugin.respond_to?(:name)
           return plugin.name
         else

@@ -11,11 +11,26 @@ require "ckick/path_delegate"
 
 module CKick
 
+  # Represents a project sub directory (in respect to CMake sub_directory() command)
   class SubDirectory
     include Hashable
 
-    attr_reader :name, :parent_dir, :has_cmake
+    # directory name
+    attr_reader :name
 
+    # parent directory
+    attr_reader :parent_dir
+
+    # whether or not this directory has targets and a CMakeLists.txt
+    attr_reader :has_cmake
+
+    # * +args+ - SubDirectory hash (directly a CKickfile :subdirs Array element parsed with keys as Symbol), must be a Hash
+    # ====== Input hash keys
+    # * +:name+ - subdirectory name
+    # * +:libraries+ - libraries built in this subdirectory (in respect to CMake add_library() command), Array of Hash each containing information for CKick::Library::new
+    # * +:executables+ - executables built in this subdirectory (in respect to CMake add_executable() command), Array of Hash each containing information for CKick::Executable::new
+    # * +:subdirs+ - recursive subdirectories (in respect to CMake subdirectory() command), must be a Array of Hash passed to CKick::SubDirectory::new
+    # * +:has_cmake+ - whether or not this subdirectory has a CMakeLists.txt (consequently builds targets or not)
     def initialize args={}
       name = args[:name]
       raise IllegalInitializationError, "no name provided to sub directory" unless name.is_a?(String) && !name.empty?
@@ -52,10 +67,12 @@ module CKick
       @parent_dir = nil
     end
 
+    # converts to String, subdirectory name as is
     def to_s
       @name
     end
 
+    # converts to Hash (to CKickfile :subdirs element)
     def to_hash
       if !@has_cmake
         return to_no_empty_value_hash.without(:parent_dir)
@@ -63,11 +80,15 @@ module CKick
       to_no_empty_value_hash.without(:parent_dir, :has_cmake)
     end
 
+    # subdirectory path
     def path
       raise NoParentDirError, "sub directory #{@name} has no parent set" unless @parent_dir
       File.join(@parent_dir, @name)
     end
 
+    # creates subdirectory structure
+    #
+    # this method is called recursively on subdirectories
     def create_structure
       PathDelegate.create_directory(path)
 
@@ -84,6 +105,7 @@ module CKick
       end
     end
 
+    # subdirectory CMakeLists.txt file content
     def cmake
       res = ''
 
@@ -101,10 +123,14 @@ module CKick
 
     private
 
+    # Array of all targets ( CKick::Target ) contained in this subdirectory
     def targets
       @executables + @libraries
     end
 
+    # sets parent directory path
+    #
+    # this method is called recursively on subdirectories
     def set_parent(parent_dir)
       @parent_dir = parent_dir
 
