@@ -11,9 +11,16 @@ require "ckick/hashable"
 
 module CKick
 
+  # Project dependency settings, such as include path, library path, and compiler flags
   class Dependencies
     include Hashable
 
+    # * +args+ - Dependencies hash (directly the CKickfile :dependencies element parsed with keys as Symbol), must be a Hash
+    # ====== Input hash keys
+    # * +:cflags+ - C language specific flags, for e.g. '-std=c89', '-Wall', etc., must be an Array of String
+    # * +:cxxflags+ - C++ language specific flags, for e.g. '-std=c++11', '-fno-exceptions', etc., must be an Array of String
+    # * +:include+ - Array of paths to append the include path (-I compiler option; include_directories() CMake command)
+    # * +:lib+ - Array of paths to append the link path (-L compiler option; link_directories() CMake command)
     def initialize args={}
       raise IllegalInitializationError unless args.is_a?(Hash)
 
@@ -21,7 +28,7 @@ module CKick
       raise IllegalInitializationError, "cflags provided to dependencies is not an Array" unless cflags.is_a?(Array)
       @cflags = cflags.collect do |flag|
         CFlag.new(flag: flag)
-        end
+      end
 
       cxxflags = args[:cxxflags] || []
       raise IllegalInitializationError, "cxxflags provided to dependencied is not an Array" unless cxxflags.is_a?(Array)
@@ -42,27 +49,36 @@ module CKick
       end
     end
 
+    # converts to Hash (usable in CKickfile)
     def to_hash
       to_no_empty_value_hash
     end
 
+    # CMakeLists's section content
     def cmake
       [@cflags, @cxxflags, @include, @lib].flatten(1).collect do |unit|
           unit.cmake
       end.join("\n")
     end
 
+    # compiler flags in an Array
     def flags
       [@cflags, @cxxflags, @include, @lib].flatten(1).uniq.collect do |flag|
         flag.raw_flag
       end
     end
 
+    # appends include path (-I) with +path+
+    #
+    # +path+ - include path, must be a CKick::IncludePath
     def add_include(path)
       raise BadIncludePathError, "path must be a CKick::IncludePath object" unless path.is_a?(IncludePath)
       @include << path unless @include.include?(path)
     end
 
+    # appends link path (-L) with +path+
+    #
+    # +path+ - link path, must be a CKick::LibraryPath
     def add_lib(path)
       raise BadLibraryPathError, "path must be a CKick::LibraryPath object" unless path.is_a?(LibraryPath)
       @lib << path unless @lib.include?(path)
