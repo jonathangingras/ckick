@@ -6,9 +6,12 @@ require "ckick/compiler_flag"
 
 module CKick
 
+  # C compiler flag representation
   class CFlag < CompilerFlag
+
+    # appends ${CMAKE_C_FLAGS} (CMake C compiler flags)
     def cmake
-      %Q(set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} #{@content}"))
+      %Q|set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} #{@content}")|
     end
   end
 

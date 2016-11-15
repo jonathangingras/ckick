@@ -9,9 +9,15 @@ require "ckick/hashable"
 
 module CKick
 
+  # common representation of targets to build, such as executables and libraries
   class Target
     include Hashable
 
+    # * +args+ - Target hash (directly a CKickfile target element's hash parsed with keys as Symbol), must be a Hash
+    # ====== Input hash keys
+    # * +:name+ - name of the target
+    # * +:source+ - either a String (single-source file) or Array of String (multiple source files)
+    # * +:libs+ - names of the libraries to link to the target, must be Array of String
     def initialize args={}
       raise IllegalInitializationError unless args.is_a?(Hash) && !args.empty?
 
@@ -46,14 +52,17 @@ module CKick
       @parent_dir = nil
     end
 
+    # converts to Hash (for CKickfile)
     def to_hash
       to_no_empty_value_hash.without(:parent_dir)
     end
 
+    # converts to String, the target's name as is
     def to_s
       @name
     end
 
+    # Array of source file paths
     def paths
       raise NoParentDirError, "No parent directory has been set for target #{@name}" unless @parent_dir
       res = []
@@ -63,6 +72,7 @@ module CKick
       res
     end
 
+    # creates target's structure (each missing source file)
     def create_structure
       paths.each do |path|
         unless File.exist? path
@@ -73,6 +83,7 @@ module CKick
 
     private
 
+    # set's parent directory
     def set_parent(parent_dir)
       @parent_dir = parent_dir
     end

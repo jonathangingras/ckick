@@ -60,7 +60,7 @@ end
 object1 = Object.new
 object2 = Object.new
 
-class CMakeAbleMock
+class CMakeAbleMock #:nodoc:
   def cmake
     "cmake"
   end

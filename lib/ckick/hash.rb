@@ -4,7 +4,10 @@
 
 require "ckick/array"
 
+# :nodoc:
 class Hash
+  # transforms keys recursively
+  # * +block+ - transform operation
   def array_aware_deep_transform_keys(&block)
     result = {}
     each do |key, value|
@@ -19,14 +22,17 @@ class Hash
     result
   end
 
+  # transforms each String-key to Symbol-key
   def array_aware_deep_symbolize_keys
-    array_aware_deep_transform_keys{ |key| key.to_sym rescue key }
+    array_aware_deep_transform_keys { |key| key.to_sym rescue key }
   end
 
+  # copy of the hash without pairs of +keys+
   def without(*keys)
     dup.without!(*keys)
   end
 
+  # removes each pair of +keys+
   def without!(*keys)
     reject! { |key| keys.include?(key) }
   end

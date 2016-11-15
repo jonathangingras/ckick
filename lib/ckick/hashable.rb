@@ -6,7 +6,11 @@ require "ckick/hash"
 require "ckick/hash_elements"
 
 module CKick
+
+  # mixin enabling hash serialization
   module Hashable
+
+    # transforms object to Hash such that { :instance_variable => value }
     def to_hash
       a = {}
       instance_variables_as_key_values.each do |name, obj|
@@ -15,6 +19,7 @@ module CKick
       a
     end
 
+    # transforms object to Hash such that { :instance_variable => value }, excluding any pair where value responds +true+ to :empty? method
     def to_no_empty_value_hash
       a = {}
       instance_variables_as_key_values.each do |name, obj|

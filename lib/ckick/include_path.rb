@@ -6,11 +6,15 @@ require "ckick/path"
 
 module CKick
 
+  #Represents a compiler include path (-I option or CMake include_directories() fonction)
   class IncludePath < Path
+
+    #compiler flag as is
     def raw_flag
       "-I#{@path}"
     end
 
+    #cmake code content
     def cmake
       %Q{include_directories(#{@path})}
     end

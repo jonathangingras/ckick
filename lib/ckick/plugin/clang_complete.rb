@@ -4,10 +4,12 @@
 
 require "ckick/plugin"
 
+# Creates a .clang_complete file for clang auto completion
 class ClangComplete < CKick::Plugin
-  # Creates a .clang_complete file for clang auto completion
 
+  # assembles project flags and writes a .clang_complete file at project root
   def call(project)
+    # :nodoc:
     def clang_complete project
       project.dependencies.flags.join("\n")
     end

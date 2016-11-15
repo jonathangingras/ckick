@@ -6,7 +6,10 @@ require "ckick/target"
 
 module CKick
 
+  # represents an executable target (in respect to CMake add_executable() command)
   class Executable < Target
+
+    # CMakeLists content of the target
     def cmake
       res = []
 

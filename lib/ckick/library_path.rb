@@ -6,11 +6,15 @@ require "ckick/path"
 
 module CKick
 
+  # Represents a library link path (in respect to compiler -L option and CMake link_directories() fonction)
   class LibraryPath < Path
+
+    #compiler flag as is
     def raw_flag
       "-L#{@path}"
     end
 
+    #cmake code content
     def cmake
       "link_directories(#{@path})"
     end

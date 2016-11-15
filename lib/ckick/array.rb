@@ -4,7 +4,10 @@
 
 require "ckick/hash"
 
+# :nodoc:
 class Array
+  # transforms any Hash key recursively
+  # * +block+ - transform operation
   def array_aware_deep_transform_keys(&block)
     result = []
     each do |value|
