@@ -8,77 +8,346 @@ lib = File.join(File.dirname(File.dirname(File.realpath(__FILE__))), 'lib')
 $LOAD_PATH << lib unless $LOAD_PATH.include?(lib)
 
 require "fileutils"
+require "rake"
 require "json"
 require "pathname"
 require "ckick"
 
-def new_
-  raise "bad usage" if ARGV[1].nil?
-  raise "file or directory already exists" if Dir.exist?(ARGV[1])
-  raise "bad project name containing non-alphanumeric characters" unless ARGV[1].match(/^[[A-z][0-9]]+$/)
 
-  FileUtils.mkdir_p(ARGV[1])
-  Dir.chdir(ARGV[1])
+class Fixnum
+  def is_last?(ary)
+    raise "not an Array" unless ary.is_a?(Array)
+    self == ary.length - 1
+  end
+end
 
-  project = CKick::Project.new(
-    CKick::load_ckickfile(CKick::RESOURCE_DIR, "default_cxx_project.json"))
-  project.set_name(ARGV[1])
-
-  h = project.to_hash
-  h[:root] = Pathname.new(File.absolute_path(project.path)).relative_path_from(Pathname.pwd).to_s
-  lines = JSON.pretty_generate(h, {indent: "  "}).split("\n")
-  lines.collect! do |line|
-    if line[2] == '"'
-      line = "\n" + line
+class Array
+  def first_or_raise(message_or_class, message_if_class=nil)
+    result = first
+    if message_if_class.nil?
+      raise message_or_class if result.nil?
+    else
+      raise message_or_class, message_if_class if result.nil?
     end
-    line
+    result
   end
-  lines[1][0] = ""
-  file_content = lines.join("\n")
-
-  File.new("CKickfile", "w") << file_content
 end
 
-def kick_
-  if !ARGV[0].nil? && ARGV[0] == "kick"
-    raise "no such directory: #{ARGV[0]}" unless Dir.exist?(ARGV[1])
-    Dir.chdir(ARGV[1])
-  elsif ARGV.size == 0 || Dir.exist?(ARGV[0])
-  else
-    raise "bad usage"
+$cmake_options = []
+
+module CKick
+  class Project
+    def find_subdirectory!(path)
+      find_subdirectory_private(path, true)
+    end
+
+    def find_subdirectory(path)
+      find_subdirectory_private(path, false)
+    end
+
+    private
+
+    def find_subdirectory_private(path, create_when_missing)
+      path_lvls = Pathname.new(File.absolute_path(path)).relative_path_from(Pathname.new(absolute_root)).each_filename.to_a
+
+      dir_ptr = self
+      while path_lvls.length != 0
+        catch :found do
+          dir_ptr.subdirs.each do |dir|
+            if dir.name == path_lvls[0]
+              dir_ptr = dir
+              path_lvls = path_lvls[1..-1]
+              throw :found
+            end
+          end
+
+          # not found
+          raise "no such directory taken in charge by project: `#{path_lvls[0]}'" unless create_when_missing
+          new_dir = CKick::SubDirectory.new(name: path_lvls[0])
+          dir_ptr.add_subdirectory(new_dir)
+          dir_ptr = new_dir
+          path_lvls = path_lvls[1..-1]
+        end
+      end
+
+      dir_ptr
+    end
   end
-  project = CKick::Project.new(CKick::load_ckickfile)
-  project.create_structure
+
+  class SubDirectory
+    # subdirectories
+    attr_reader :subdirs
+
+    # add a sub directory, parent of passed object will be overridden to current object
+    def add_subdirectory(subdir)
+      raise "must be a CKick::SubDirectory" unless subdir.is_a?(SubDirectory)
+      subdir.__send__ :set_parent, path
+      @subdirs << subdir
+    end
+
+    # add a target, parent of passed object will be overridden to current object
+    def add_target(target)
+      raise "must be a CKick::Target" unless lib.is_a?(Target)
+      target.__send__ :set_parent, path
+      @targets << target
+    end
+
+    def find_target(name)
+      targets.select { |t| t.name == name }.first_or_raise "no such CKick::Executable found"
+    end
+  end
+
+  class Target
+    def add_to_source(*source_files)
+      source_files.each { |source_file| @source << source_file }
+    end
+
+    def add_link(library_link)
+      raise "argument is no CKick::LibraryLink" unless library_link.is_a?(LibraryLink)
+      @libs << library_link
+    end
+  end
+
+  module CLI
+    def self.puts(*args)
+      Kernel.print '[CKick] ', *args
+      Kernel.puts ''
+    end
+
+    def self.wrapped(&block)
+      begin
+        yield
+      rescue => error
+        puts error
+        exit(1)
+      end
+    end
+
+    def self.find_project_root(from_path=Dir.pwd)
+      path = from_path
+
+      while !Dir.entries(path).include?("CKickfile")
+        raise "could not find parent directory containing a CKickfile" unless path != File.dirname(path)
+        path = File.dirname(path)
+      end
+
+      path
+    end
+
+    def self.with_found_subdirectory(path, &block)
+      project = CKick::Project.new(CKick::load_ckickfile(find_project_root(path)))
+      yield project.find_subdirectory(path)
+      CKick.save_ckickfile(project)
+      kick
+    end
+
+    def self.with_found_target(name, path, &block)
+      with_found_subdirectory(path) do |subdir|
+        yield subdir.find_target(name)
+      end
+    end
+
+
+    def self.new_project(name, *args)
+      raise "bad usage" if name.nil?
+      raise "file or directory already exists" if Dir.exist?(name)
+      raise "bad project name containing non-alphanumeric characters" unless name.match(/^[[A-z][0-9]]+$/)
+
+      FileUtils.mkdir_p(File.join(name, "src"))
+      FileUtils.mkdir_p(File.join(name, "test"))
+      Dir.chdir(name)
+
+      project = CKick::Project.new(CKick::load_ckickfile(CKick::RESOURCE_DIR, "default_cxx_project.json", Dir.pwd))
+      project.set_name(name)
+      FileUtils.cp(File.join(CKick::RESOURCE_DIR, "example_main.cc"), File.join("src", "main.cc"))
+      FileUtils.cp(File.join(CKick::RESOURCE_DIR, "example_gtest.cc"), File.join("test", "main_test.cc"))
+
+      CKick.save_ckickfile(project)
+    end
+
+    def self.kick(*args)
+      project = CKick::Project.new(CKick::load_ckickfile(find_project_root))
+      Dir.chdir(project.absolute_root)
+      project.create_structure
+    end
+
+    def self.build(*args)
+      kick
+
+      project = CKick::Project.new(CKick.load_ckickfile(find_project_root))
+      Dir.chdir(project.absolute_root)
+
+      relative_build_path = Pathname.new(project.root).relative_path_from(Pathname.new(project.build_dir)).to_s
+      FileUtils.mkdir_p(project.build_dir)
+
+      Dir.chdir(project.build_dir)
+      puts "changing directory to `#{project.build_dir}'"
+
+      cmake_options = args.select { |arg| arg.length > 2 && arg[0..1] == "-D" }
+      puts "calling cmake"
+      Rake.sh "cmake #{cmake_options.join(' ')} #{relative_build_path}" do |ok, res|
+        puts "calling make"
+        Rake.sh "make -j" if ok
+      end
+    end
+
+    def self.test(*args)
+      build
+
+      Rake.sh "ctest"
+    end
+
+    def self.add_target(target_class, name, *args)
+      path = Dir.pwd
+
+      project = CKick::Project.new(CKick::load_ckickfile(find_project_root(path)))
+
+      src_path = args.each do |filepath|
+        Pathname.new(File.join(path, filepath)).relative_path_from(Pathname.new(path)).to_s
+      end.collect.to_a
+
+      project.find_subdirectory!(path).add_target(target_class.new(name: name, source: src_path))
+
+      CKick.save_ckickfile(project)
+    end
+
+    def self.add_exe(name, *args)
+      add_target(CKick::Executable, name, *args)
+    end
+
+    def self.add_lib(name, *args)
+      add_target(CKick::Library, name, *args)
+    end
+
+    def self.add_to(target_name, *args)
+      target_path = Dir.pwd
+      with_found_target(target_name, target_path) do |target|
+        target.add_to_source(*(args.each do |file|
+                                 Pathname.new(File.absolute_path(file))
+                                   .relative_path_from(Pathname.new(target_path)).to_s
+                               end.collect))
+      end
+    end
+
+    def self.link(target_name, *args)
+      with_found_target(target_name, Dir.pwd) do |target|
+        args.each { |lib| target.add_link(CKick::LibraryLink.new(name: lib)) }
+      end
+    end
+
+    class ::CKick::VariableName
+      def initialize(name)
+        raise "name must be String without inner spaces" unless name.is_a?(String) && name.split(' ').length != 1
+        @name = name
+      end
+
+      def to_s
+        "${#{@name}}"
+      end
+    end
+
+    class ::CKick::Variable
+      attr_reader :name
+      attr_reader :value
+
+      def initialize(args={})
+        raise "name must be String or CKick::VariableName" unless args[:name].is_a?(VariableName) || args[:name].is_a?(String)
+        raise "value must be String or nil" unless args[:value].is_a?(String) || args.nil?
+
+        @name = args[:name].is_a?(String) ? CKick::VariableName.new(args[:name]) : args[:name]
+        @value = args[:value] || ""
+      end
+
+      def cmake
+        "set(#{@name} #{@value})"
+      end
+    end
+
+    def self.adddir(name, *args)
+      project = CKick::Project.new(CKick.load_ckickfile(find_project_root))
+      project.find_subdirectory!(File.join(Dir.pwd, name))
+      CKick.save_ckickfile(project)
+    end
+
+    def self.set(varname, *args)
+      project = CKick::Project.new(CKick.load_ckickfile(find_project_root))
+      project.add_variable(CKick::Variable.new(name: varname, value: args.join(' ')))
+      CKick.save_ckickfile(project)
+    end
+
+    class ::String
+      def has_prefix?(prefix)
+        length > prefix.length && self[0..prefix.length] == prefix
+      end
+
+      def to_command_sym
+        has_prefix?("cmd:") ? self[4..-1].to_sym : to_sym
+      end
+    end
+
+    class CommandHash
+      def initialize(args={})
+        @commands = args
+      end
+
+      def has_command?(cmd)
+        return @commands.include?(cmd.to_command_sym)
+      end
+
+      def [](cmd)
+        @commands[cmd.to_command_sym]
+      end
+    end
+
+    COMMANDS = CommandHash.new(
+      kick:   method(:kick),
+      new:    method(:new_project),
+      build:  method(:build),
+      '-b':   method(:build),
+      test:   method(:test),
+      '-t':   method(:test),
+      addexe: method(:add_exe),
+      addlib: method(:add_lib),
+      addto:  method(:add_to),
+      link:   method(:link),
+      adddir: method(:adddir),
+    )
+
+  end
 end
 
-COMMANDS = {
-  kick: method(:kick_),
-  new: method(:new_),
-  #build: method(:build_)
-}
 
 def main
-  command = :kick
+  command = "kick"
 
-  if ARGV.size == 1
-    if COMMANDS.include?(ARGV[0].to_sym)
-      if Dir.exist?(ARGV[0])
-        raise "first argument `#{ARGV[0]}' is ambiguous: a directory entry and a command exist with this name"
-      else
-        command = ARGV[0].to_sym
-      end
+  args = []
+
+  if ARGV.size >= 1
+    if CKick::CLI::COMMANDS.has_command?(ARGV[0])
+      raise "first argument `#{ARGV[0]}' is ambiguous: a directory entry and a command exist with this name, use -b
+" if Dir.exist?(ARGV[0])
+      command = ARGV[0]
+      args = ARGV[1..-1]
     else
-      raise "no such directory: #{ARGV[0]}" unless Dir.exist?(ARGV[0])
-      Dir.chdir(ARGV[0])
+      begin
+        Dir.chdir(ARGV[0])
+      rescue
+        raise "no such file or directory: `#{ARGV[0]}'"
+      end
+      if !ARGV[1].nil?
+        raise "no such command: #{ARGV[1]}" unless CKick::CLI::COMMANDS.has_command?(ARGV[1])
+        command = ARGV[1]
+        args = ARGV[2..-1]
+      else
+        args = ARGV[1..-1]
+      end
     end
-  elsif ARGV.size > 1
-    raise "no such command: #{ARGV[0]}" unless COMMANDS.include?(ARGV[0].to_sym)
-    command = ARGV[0].to_sym
   end
 
   CKick::load_builtin_plugins
 
-  COMMANDS[command].call
+  CKick::CLI::COMMANDS[command].call(*args)
 end
 
-main
+
+CKick::CLI.wrapped { main }

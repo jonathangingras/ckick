@@ -158,25 +158,37 @@ describe CKick::Target, '#create_structure' do
 end
 
 describe CKick::Target, '#to_hash' do
-  it "outputs all attributes without @parent_dir and without @libs when @libs empty" do
+  it "outputs all attributes when lib empty" do
     target = CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2'])
 
-    expect(target.to_hash).to eq({name: "somename", source: ["somesource1", "somesource2"]})
+    expect(target.to_hash.keys).to include(:name, :source)
   end
 
-  it "outputs all attributes without @parent_dir and with @libs when @libs non-empty" do
+  it "outputs all attributes when @libs non-empty" do
     target = CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2'], libs: ["lib1", "lib2"])
 
-    expect(target.to_hash).to eq({name: "somename", source: ["somesource1", "somesource2"], libs: ["lib1", "lib2"]})
+    expect(target.to_hash.keys).to include(:name, :source, :libs)
   end
-end
 
-describe CKick::Target, '#to_hash' do
   it "does not output a hash containing :parent_dir key" do
     expect(CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2']).to_hash.keys).not_to include(:parent_dir)
   end
 
   it "does not output a hash containing empty values" do
     expect(CKick::Target.new(name: "somename", source: ["somesource1", 'somesource2']).to_hash.values).not_to include([])
+  end
+end
+
+describe CKick::Target, '#cmake' do
+  it "does not output anything when no :install_dir" do
+    cmake_code = CKick::Target.new(name: "somename", source: ["somesource1", "somesource2"]).cmake
+
+    expect(cmake_code).not_to match(/install\(.*\)/)
+  end
+
+  it "does output install command when :install_dir present" do
+    cmake_code = CKick::Target.new(name: "somename", source: ["somesource1", "somesource2"], install_dir: "lib").cmake
+
+    expect(cmake_code).to match(/install\(.*\)/)
   end
 end

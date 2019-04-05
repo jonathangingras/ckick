@@ -34,7 +34,20 @@
             ]
         },
         {
-            "name": "test"
+            "name": "test",
+            "executables": [
+                {
+                    "name": "main_test",
+                    "source": "main_test.cc",
+                    "libs": [
+                        "${GTEST_LIBRARIES}"
+                    ],
+                    "dependencies": [
+                        "${GTEST_TARGET}"
+                    ],
+                    "is_test": true
+                }
+            ]
         }
     ]
 }

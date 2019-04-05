@@ -24,6 +24,9 @@ module CKick
     # whether or not this directory has targets and a CMakeLists.txt
     attr_reader :has_cmake
 
+    # Array of all targets ( CKick::Target ) contained in this subdirectory
+    attr_reader :targets
+
     # * +args+ - SubDirectory hash (directly a CKickfile :subdirs Array element parsed with keys as Symbol), must be a Hash
     # ====== Input hash keys
     # * +:name+ - subdirectory name
@@ -31,6 +34,7 @@ module CKick
     # * +:executables+ - executables built in this subdirectory (in respect to CMake add_executable() command), Array of Hash each containing information for CKick::Executable::new
     # * +:subdirs+ - recursive subdirectories (in respect to CMake subdirectory() command), must be a Array of Hash passed to CKick::SubDirectory::new
     # * +:has_cmake+ - whether or not this subdirectory has a CMakeLists.txt (consequently builds targets or not)
+    # * +:install_dir+ - installation directory, relative to CMAKE_INSTALL_PREFIX, "" by default for no install
     def initialize args={}
       name = args[:name]
       raise IllegalInitializationError, "no name provided to sub directory" unless name.is_a?(String) && !name.empty?
@@ -50,19 +54,22 @@ module CKick
       @name = name
       @has_cmake = has_cmake
 
-      @libraries = []
+      @targets = []
       libs.each do |lib|
-        @libraries << Library.new(lib)
+        @targets << Library.new(lib)
       end
-      @executables = []
       exes.each do |exe|
-        @executables << Executable.new(exe)
+        @targets << Executable.new(exe)
       end
 
       @subdirs = []
       subdirs.each do |subdir|
         @subdirs << SubDirectory.new(subdir)
       end
+
+      install_dir = args[:install_dir] || ""
+      raise BadDirectoryNameError, "Bad directory name error, must be a String" unless install_dir.is_a?(String)
+      @install_dir = install_dir
 
       @parent_dir = nil
     end
@@ -74,10 +81,14 @@ module CKick
 
     # converts to Hash (to CKickfile :subdirs element)
     def to_hash
-      if !@has_cmake
-        return to_no_empty_value_hash.without(:parent_dir)
+      excluded_attributes = [:parent_dir, :targets]
+      excluded_attributes << :has_cmake if @has_cmake == true
+      output = to_no_empty_value_hash.without(*excluded_attributes)
+      [[Executable, :executables], [Library, :libraries]].each do |klass, symbol|
+        targets = @targets.select { |t| t.is_a?(klass) }.collect { |t| t.to_hash }
+        output[symbol] = targets unless targets.empty?
       end
-      to_no_empty_value_hash.without(:parent_dir, :has_cmake)
+      output
     end
 
     # subdirectory path
@@ -118,15 +129,14 @@ module CKick
         end.join("\n")
       end
 
+      unless @install_dir.empty?
+        res << %{install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION #{@install_dir} PATTERN "CMakeLists.txt" EXCLUDE)\n}
+      end
+
       res
     end
 
     private
-
-    # Array of all targets ( CKick::Target ) contained in this subdirectory
-    def targets
-      @executables + @libraries
-    end
 
     # sets parent directory path
     #

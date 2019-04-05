@@ -30,8 +30,6 @@ module CKick
       a
     end
 
-    private
-
     def instance_variables_as_key_values
       instance_variables.collect do |att|
         [att[1..-1].to_sym, instance_variable_get(att.to_sym)]
@@ -45,5 +43,7 @@ module CKick
         return obj.to_hash_element
       end
     end
+
+    private :instance_variables_as_key_values, :object_value
   end
 end

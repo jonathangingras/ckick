@@ -5,20 +5,17 @@
 require "ckick/plugin"
 require "fileutils"
 
-class GTest < CKick::Plugin
-  LIBS_VARIABLE = "${GTEST_LIBRARIES}"
-
+class Prufen < CKick::Plugin
   def initialize args={}
     @optional = args[:optional] || false
-    @resource_file = "build-gtest.cmake"
+    @resource_file = "build-prufen.cmake"
   end
 
   def cmake
     res = ''
-    res << %Q(option(BUILD_TESTING OFF "whether to build tests or not")\n) \
-        << "if(BUILD_TESTING)\n\t" if @optional
+    res << %Q(option(BUILD_TESTS OFF "whether to build tests or not")\n) \
+        << "if(BUILD_TESTS)\n\t" if @optional
 
-    res << "enable_testing()\n"
     res << "include(#{@resource_file})"
 
     res << "\nendif()" if @optional
@@ -34,8 +31,7 @@ class GTest < CKick::Plugin
   def include(project)
     res = []
     [
-      File.join(project.build_dir, "gtest-prefix", "src", "gtest", "googletest", "include"),
-      File.join(project.build_dir, "gtest-prefix", "src", "gtest", "googlemock", "include")
+      File.join(project.build_dir, "prufen-prefix", "src", "prufen", "include")
     ].each do |path|
       FileUtils.mkdir_p path
       res << CKick::IncludePath.new(path: path)

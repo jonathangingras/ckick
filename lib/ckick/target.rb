@@ -13,11 +13,16 @@ module CKick
   class Target
     include Hashable
 
+    # target name for CMake
+    attr_reader :name
+
     # * +args+ - Target hash (directly a CKickfile target element's hash parsed with keys as Symbol), must be a Hash
     # ====== Input hash keys
     # * +:name+ - name of the target
     # * +:source+ - either a String (single-source file) or Array of String (multiple source files)
     # * +:libs+ - names of the libraries to link to the target, must be Array of String
+    # * +:install_dir+ - installation directory, relative to CMAKE_INSTALL_PREFIX, "" by default for no install
+    # * +:dependencies+ - dependent cmake targets (strings), must be Array of String or single String
     def initialize args={}
       raise IllegalInitializationError unless args.is_a?(Hash) && !args.empty?
 
@@ -49,6 +54,15 @@ module CKick
         raise BadLibError, "Bad library name provided for target #{@name}: #{libs}"
       end
 
+      install_dir = args[:install_dir] || ""
+      raise BadDirectoryNameError, "Bad directory name error, must be a String" unless install_dir.is_a?(String)
+      @install_dir = install_dir
+
+      dependencies = args[:dependencies] || []
+      dependencies = [dependencies] if dependencies.is_a?(String)
+      raise BadTargetDependencyNameError, "Bad dependency target name error, must be an Array of String or single String" unless dependencies.select { |el| !el.is_a?(String) }.empty?
+      @dependencies = dependencies
+
       @parent_dir = nil
     end
 
@@ -79,6 +93,14 @@ module CKick
           PathDelegate.touch_file(path)
         end
       end
+    end
+
+    # CMakeLists content of the target
+    def cmake
+      dependencies = @dependencies.empty? ? "" : %{add_dependencies(#{@name} #{@dependencies.join(' ')})}
+      installation = @install_dir.empty? ? "" : %{install(TARGETS #{@name} DESTINATION #{@install_dir})}
+      #[dependencies, installation].select { |s| !s.empty? }.join("\n")
+      dependencies + installation
     end
 
     private

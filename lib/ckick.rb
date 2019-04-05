@@ -6,6 +6,7 @@ require "ckick/version"
 require "ckick/project"
 require "ckick/find_plugin"
 require "ckick/ckickfile"
+require "ckick/cli"
 
 # CKick module
 # contains all CKick core code
@@ -68,5 +69,17 @@ module CKick
 
   # :nodoc:
   class BadFileContentError < Error
+  end
+
+  # :nodoc:
+  class BadDirectoryNameError < Error
+  end
+
+  # :nodoc:
+  class BadTargetDependencyNameError < Error
+  end
+
+  # :nodoc:
+  class BadTestDefinitionError < Error
   end
 end

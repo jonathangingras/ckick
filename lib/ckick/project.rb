@@ -21,8 +21,11 @@ module CKick
     # project CKick::Dependencies
     attr_reader :dependencies
 
-    # project root directory
+    # project root directory, relative to CKickfile
     attr_reader :root
+
+    # project root directory absolute path, not saved in CKickfile
+    attr_reader :absolute_root
 
     # project build directory
     attr_reader :build_dir
@@ -60,6 +63,7 @@ module CKick
       @name = name
       @cmake_min_version = min_v
       @root = root
+      @absolute_root = args[:absolute_root] || File.absolute_path(@root)
       @build_dir = build_dir
       @dependencies = Dependencies.new(args[:dependencies] || {})
 
@@ -90,7 +94,7 @@ module CKick
 
     # convert to Hash (to CKickfile)
     def to_hash
-      to_no_empty_value_hash.without(:subdirs_initiated)
+      to_no_empty_value_hash.without(:subdirs_initiated, :absolute_root)
     end
 
     # project root directory path

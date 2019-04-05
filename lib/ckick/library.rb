@@ -37,6 +37,8 @@ module CKick
         res << "target_link_libraries(#{@name} #{@libs.join(' ')})"
       end
 
+      res << super unless super.empty?
+
       res.join("\n")
     end
   end
