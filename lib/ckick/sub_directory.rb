@@ -27,6 +27,9 @@ module CKick
     # Array of all targets ( CKick::Target ) contained in this subdirectory
     attr_reader :targets
 
+    # subdirectories
+    attr_reader :subdirs
+
     # * +args+ - SubDirectory hash (directly a CKickfile :subdirs Array element parsed with keys as Symbol), must be a Hash
     # ====== Input hash keys
     # * +:name+ - subdirectory name
@@ -136,8 +139,6 @@ module CKick
       res
     end
 
-    private
-
     # sets parent directory path
     #
     # this method is called recursively on subdirectories
@@ -152,6 +153,29 @@ module CKick
         subdir.__send__ :set_parent, path
       end
     end
+
+    # TODO doc + specs
+    # add a sub directory, parent of passed object will be overridden to current object
+    def add_subdirectory(subdir)
+      raise "must be a CKick::SubDirectory" unless subdir.is_a?(SubDirectory)
+      subdir.__send__ :set_parent, path
+      @subdirs << subdir
+    end
+
+    # TODO doc + specs
+    # add a target, parent of passed object will be overridden to current object
+    def add_target(target)
+      raise "must be a CKick::Target" unless lib.is_a?(Target)
+      target.__send__ :set_parent, path
+      @targets << target
+    end
+
+    # TODO doc + specs
+    def find_target(name)
+      targets.select { |t| t.name == name }.first_or_raise "no such CKick::Executable found"
+    end
+
+    private :set_parent
   end
 
 end

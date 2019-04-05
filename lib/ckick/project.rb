@@ -5,6 +5,7 @@
 require "ckick/nil_class"
 require "ckick/dependencies"
 require "ckick/sub_directory"
+require "ckick/variable"
 require "ckick/hashable"
 require "ckick/path_delegate"
 require "ckick/plugin_delegate"
@@ -49,6 +50,8 @@ module CKick
       raise IllegalInitializationError, "name must be a non-empty string only containing alphanumeric characters" unless name.is_a?(String) && name.match(NAME_MATCH)
 
       min_v = args[:cmake_min_version] || '3'
+      variables = args[:variables] || []
+
       raise IllegalInitializationError, "cmake_min_version is non-String" unless min_v.is_a?(String)
       raise IllegalInitializationError, "cmake_min_version has non working pattern x or x.y or x.y.z" unless min_v.match(CMAKE_VERSION_MATCH)
 
@@ -59,6 +62,7 @@ module CKick
       build_dir = args[:build_dir] || ""
       raise IllegalInitializationError, "build directory is non-String" unless build_dir.is_a?(String)
       raise IllegalInitializationError, "build directory is empty" if build_dir.empty?
+      raise IllegalInitializationError, "varibales must be CKick::Variable" unless variables.is_a?(Array) && variables.select { |v| !v.is_a?(::CKick::Variable) }.empty?
 
       @name = name
       @cmake_min_version = min_v
@@ -66,6 +70,7 @@ module CKick
       @absolute_root = args[:absolute_root] || File.absolute_path(@root)
       @build_dir = build_dir
       @dependencies = Dependencies.new(args[:dependencies] || {})
+      @variables = variables
 
       @plugins = []
       args[:plugins].each do |plugin|
@@ -100,6 +105,12 @@ module CKick
     # project root directory path
     def path
       @root
+    end
+
+    # TODO doc + specs
+    def add_variable(variable)
+      raise "variable must be a CKick::Variable" unless variable.is_a?(::CKick::Variable)
+      @variables << variable
     end
 
     # creates the project CMake structure
@@ -207,6 +218,43 @@ module CKick
 
       res << "##end plugin section##"
     end
-  end
 
+    # TODO doc + specs
+    def find_subdirectory!(path)
+      find_subdirectory_private(path, true)
+    end
+
+    # TODO doc + specs
+    def find_subdirectory(path)
+      find_subdirectory_private(path, false)
+    end
+
+    def find_subdirectory_private(path, create_when_missing)
+      path_lvls = Pathname.new(File.absolute_path(path)).relative_path_from(Pathname.new(absolute_root)).each_filename.to_a
+
+      dir_ptr = self
+      while path_lvls.length != 0
+        catch :found do
+          dir_ptr.subdirs.each do |dir|
+            if dir.name == path_lvls[0]
+              dir_ptr = dir
+              path_lvls = path_lvls[1..-1]
+              throw :found
+            end
+          end
+
+          # not found
+          raise "no such directory taken in charge by project: `#{path_lvls[0]}'" unless create_when_missing
+          new_dir = CKick::SubDirectory.new(name: path_lvls[0])
+          dir_ptr.add_subdirectory(new_dir)
+          dir_ptr = new_dir
+          path_lvls = path_lvls[1..-1]
+        end
+      end
+
+      dir_ptr
+    end
+
+    private :find_subdirectory_private
+  end
 end

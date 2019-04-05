@@ -103,12 +103,23 @@ module CKick
       dependencies + installation
     end
 
-    private
-
     # set's parent directory
     def set_parent(parent_dir)
       @parent_dir = parent_dir
     end
+
+    # TODO doc + specs
+    def add_to_source(*source_files)
+      source_files.each { |source_file| @source << source_file }
+    end
+
+    # TODO doc + specs
+    def add_link(library_link)
+      raise "argument is no CKick::LibraryLink" unless library_link.is_a?(LibraryLink)
+      @libs << library_link
+    end
+
+    private :set_parent
   end
 
 end
