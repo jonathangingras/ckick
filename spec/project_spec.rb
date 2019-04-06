@@ -57,11 +57,11 @@ describe CKick::Project, '#initialize' do
     expect {CKick::Project.new(name: "someproject", root: Dir.pwd, build_dir: 1)}.to raise_error CKick::IllegalInitializationError
   end
 
-  it "passes dependencies hash to Dependencies.new" do
+  it "passes compiler_settings hash to CompilerSettings.new" do
     object = Object.new
-    expect(CKick::Dependencies).to receive(:new).with(object)
+    expect(CKick::CompilerSettings).to receive(:new).with(object)
 
-    CKick::Project.new(name: "someproject", root: Dir.pwd, build_dir: "build", dependencies: object)
+    CKick::Project.new(name: "someproject", root: Dir.pwd, build_dir: "build", compiler_settings: object)
   end
 
   it "passes each subdir hash to SubDirectory.new" do

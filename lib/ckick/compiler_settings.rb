@@ -12,10 +12,10 @@ require "ckick/hashable"
 module CKick
 
   # Project dependency settings, such as include path, library path, and compiler flags
-  class Dependencies
+  class CompilerSettings
     include Hashable
 
-    # * +args+ - Dependencies hash (directly the CKickfile :dependencies element parsed with keys as Symbol), must be a Hash
+    # * +args+ - CompilerSettings hash (directly the CKickfile :compiler_settings element parsed with keys as Symbol), must be a Hash
     # ====== Input hash keys
     # * +:cflags+ - C language specific flags, for e.g. '-std=c89', '-Wall', etc., must be an Array of String
     # * +:cxxflags+ - C++ language specific flags, for e.g. '-std=c++11', '-fno-exceptions', etc., must be an Array of String
@@ -25,25 +25,25 @@ module CKick
       raise IllegalInitializationError unless args.is_a?(Hash)
 
       cflags = args[:cflags] || []
-      raise IllegalInitializationError, "cflags provided to dependencies is not an Array" unless cflags.is_a?(Array)
+      raise IllegalInitializationError, "cflags provided to compiler_settings is not an Array" unless cflags.is_a?(Array)
       @cflags = cflags.collect do |flag|
         CFlag.new(flag: flag)
       end
 
       cxxflags = args[:cxxflags] || []
-      raise IllegalInitializationError, "cxxflags provided to dependencied is not an Array" unless cxxflags.is_a?(Array)
+      raise IllegalInitializationError, "cxxflags provided to compiler_settings is not an Array" unless cxxflags.is_a?(Array)
       @cxxflags = cxxflags.collect do |flag|
         CXXFlag.new(flag: flag)
       end
 
       includes = args[:include] || []
-      raise IllegalInitializationError, "include provided to dependencies is not an Array" unless includes.is_a?(Array)
+      raise IllegalInitializationError, "include provided to compiler_settings is not an Array" unless includes.is_a?(Array)
       @include = includes.collect do |include|
         IncludePath.new(path: include)
       end
 
       libs = args[:lib] || []
-      raise IllegalInitializationError, "lib provided to dependencies is not an Array" unless libs.is_a?(Array)
+      raise IllegalInitializationError, "lib provided to compiler_settings is not an Array" unless libs.is_a?(Array)
       @lib = libs.collect do |lib|
         LibraryPath.new(path: lib)
       end

@@ -11,7 +11,7 @@ class ClangComplete < CKick::Plugin
   def call(project)
     # :nodoc:
     def clang_complete project
-      project.dependencies.flags.join("\n")
+      project.compiler_settings.flags.join("\n")
     end
 
     file = File.new(File.join(project.path, ".clang_complete"), 'w')

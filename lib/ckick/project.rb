@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 require "ckick/nil_class"
-require "ckick/dependencies"
+require "ckick/compiler_settings"
 require "ckick/sub_directory"
 require "ckick/variable"
 require "ckick/hashable"
@@ -19,8 +19,8 @@ module CKick
     # each project CKick::SubDirectory
     attr_reader :subdirs
 
-    # project CKick::Dependencies
-    attr_reader :dependencies
+    # project CKick::CompilerSettings
+    attr_reader :compiler_settings
 
     # project root directory, relative to CKickfile
     attr_reader :root
@@ -69,7 +69,7 @@ module CKick
       @root = root
       @absolute_root = args[:absolute_root] || File.absolute_path(@root)
       @build_dir = build_dir
-      @dependencies = Dependencies.new(args[:dependencies] || {})
+      @compiler_settings = CompilerSettings.new(args[:compiler_settings] || {})
       @variables = variables
 
       @plugins = []
@@ -151,7 +151,7 @@ module CKick
              "set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)\n" \
              "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)\n\n"
 
-      res << @dependencies.cmake << "\n\n"
+      res << @compiler_settings.cmake << "\n\n"
 
       res << plugins_cmake << "\n\n" unless @plugins.empty?
 
@@ -177,10 +177,10 @@ module CKick
     def append_plugin_paths
       @plugins.each do |plugin|
         plugin.include(self).each do |path|
-          @dependencies.add_include path
+          @compiler_settings.add_include path
         end
         plugin.lib(self).each do |path|
-          @dependencies.add_lib path
+          @compiler_settings.add_lib path
         end
       end
     end

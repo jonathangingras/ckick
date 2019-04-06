@@ -1,28 +1,28 @@
 require "spec_helper"
 
-describe CKick::Dependencies, '#initialize' do
+describe CKick::CompilerSettings, '#initialize' do
   it "initializes well when provided nothing" do
-    expect {CKick::Dependencies.new()}.not_to raise_error
+    expect {CKick::CompilerSettings.new()}.not_to raise_error
   end
 
   it "initializes well when provided empty Hash" do
-    expect {CKick::Dependencies.new({})}.not_to raise_error
+    expect {CKick::CompilerSettings.new({})}.not_to raise_error
   end
 
   it "raises when :cflags is not an Array" do
-    expect {CKick::Dependencies.new(cflags: 1)}.to raise_error CKick::IllegalInitializationError
+    expect {CKick::CompilerSettings.new(cflags: 1)}.to raise_error CKick::IllegalInitializationError
   end
 
   it "raises when :cxxflags is not an Array" do
-    expect {CKick::Dependencies.new(cxxflags: 1)}.to raise_error CKick::IllegalInitializationError
+    expect {CKick::CompilerSettings.new(cxxflags: 1)}.to raise_error CKick::IllegalInitializationError
   end
 
   it "raises when :include is not an Array" do
-    expect {CKick::Dependencies.new(include: 1)}.to raise_error CKick::IllegalInitializationError
+    expect {CKick::CompilerSettings.new(include: 1)}.to raise_error CKick::IllegalInitializationError
   end
 
   it "raises when :lib is not an Array" do
-    expect {CKick::Dependencies.new(lib: 1)}.to raise_error CKick::IllegalInitializationError
+    expect {CKick::CompilerSettings.new(lib: 1)}.to raise_error CKick::IllegalInitializationError
   end
 
   object1 = Object.new
@@ -32,28 +32,28 @@ describe CKick::Dependencies, '#initialize' do
     expect(CKick::CFlag).to receive(:new).with(flag: object1)
     expect(CKick::CFlag).to receive(:new).with(flag: object2)
 
-    CKick::Dependencies.new(cflags: [object1, object2])
+    CKick::CompilerSettings.new(cflags: [object1, object2])
   end
 
   it "passes each element of :cxxflags to CXXFlag::new" do
     expect(CKick::CXXFlag).to receive(:new).with(flag: object1)
     expect(CKick::CXXFlag).to receive(:new).with(flag: object2)
 
-    CKick::Dependencies.new(cxxflags: [object1, object2])
+    CKick::CompilerSettings.new(cxxflags: [object1, object2])
   end
 
   it "passes each element of :include to IncludePath::new" do
     expect(CKick::IncludePath).to receive(:new).with(path: object1)
     expect(CKick::IncludePath).to receive(:new).with(path: object2)
 
-    CKick::Dependencies.new(include: [object1, object2])
+    CKick::CompilerSettings.new(include: [object1, object2])
   end
 
   it "passes each element of :lib to LibraryPath::new" do
     expect(CKick::LibraryPath).to receive(:new).with(path: object1)
     expect(CKick::LibraryPath).to receive(:new).with(path: object2)
 
-    CKick::Dependencies.new(lib: [object1, object2])
+    CKick::CompilerSettings.new(lib: [object1, object2])
   end
 end
 
@@ -70,7 +70,7 @@ class CMakeAbleMock #:nodoc:
   end
 end
 
-describe CKick::Dependencies, '#cmake' do
+describe CKick::CompilerSettings, '#cmake' do
   cmake_able_object = CMakeAbleMock.new
   let(:cmake_able) { cmake_able_object }
 
@@ -86,7 +86,7 @@ describe CKick::Dependencies, '#cmake' do
 
     expect(cmake_able).to receive(:cmake).exactly(8).times
 
-    CKick::Dependencies.new(cflags: [object1, object2],
+    CKick::CompilerSettings.new(cflags: [object1, object2],
                             cxxflags: [object1, object2],
                             include: [object1, object2],
                             lib: [object1, object2]).cmake
@@ -102,7 +102,7 @@ describe CKick::Dependencies, '#cmake' do
     expect(CKick::LibraryPath).to receive(:new).with(path: object1).and_return(cmake_able)
     expect(CKick::LibraryPath).to receive(:new).with(path: object2).and_return(cmake_able)
 
-    deps = CKick::Dependencies.new(cflags: [object1, object2],
+    deps = CKick::CompilerSettings.new(cflags: [object1, object2],
                                    cxxflags: [object1, object2],
                                    include: [object1, object2],
                                    lib: [object1, object2])
@@ -111,7 +111,7 @@ describe CKick::Dependencies, '#cmake' do
   end
 end
 
-describe CKick::Dependencies, '#flags' do
+describe CKick::CompilerSettings, '#flags' do
   mocks = 8.times.collect { CMakeAbleMock.new }
   let(:cmake_ables) { mocks }
   uniq_mock = CMakeAbleMock.new
@@ -129,7 +129,7 @@ describe CKick::Dependencies, '#flags' do
 
     cmake_ables.each{ |cmake_able| expect(cmake_able).to receive(:raw_flag).once }
 
-    CKick::Dependencies.new(cflags: [object1, object2],
+    CKick::CompilerSettings.new(cflags: [object1, object2],
                             cxxflags: [object1, object2],
                             include: [object1, object2],
                             lib: [object1, object2]).flags
@@ -145,7 +145,7 @@ describe CKick::Dependencies, '#flags' do
     expect(CKick::LibraryPath).to receive(:new).with(path: object1).and_return(cmake_ables[6])
     expect(CKick::LibraryPath).to receive(:new).with(path: object2).and_return(cmake_ables[7])
 
-    deps = CKick::Dependencies.new(cflags: [object1, object2],
+    deps = CKick::CompilerSettings.new(cflags: [object1, object2],
                                    cxxflags: [object1, object2],
                                    include: [object1, object2],
                                    lib: [object1, object2])
@@ -165,30 +165,30 @@ describe CKick::Dependencies, '#flags' do
 
     expect(uniq_cmake_able).to receive(:raw_flag).once
 
-    CKick::Dependencies.new(cflags: [object1, object2],
+    CKick::CompilerSettings.new(cflags: [object1, object2],
                             cxxflags: [object1, object2],
                             include: [object1, object2],
                             lib: [object1, object2]).flags
   end
 end
 
-describe CKick::Dependencies, '#add_include' do
+describe CKick::CompilerSettings, '#add_include' do
   it "raises when input is not a CKick::IncludePath" do
-    expect {CKick::Dependencies.new().add_include(1)}.to raise_error CKick::BadIncludePathError
+    expect {CKick::CompilerSettings.new().add_include(1)}.to raise_error CKick::BadIncludePathError
   end
 
   it "does not raise when input is a CKick::IncludePath" do
     mock = instance_double("CKick::IncludePath")
     expect(mock).to receive(:is_a?).with(CKick::IncludePath).and_return true
 
-    expect {CKick::Dependencies.new().add_include(mock)}.not_to raise_error
+    expect {CKick::CompilerSettings.new().add_include(mock)}.not_to raise_error
   end
 
   it "does not append include path when path already inside" do
     mock = instance_double("CKick::IncludePath")
     expect(mock).to receive(:is_a?).twice.with(CKick::IncludePath).and_return true
     expect(mock).to receive(:to_hash_element).twice.and_return "mock"
-    deps = CKick::Dependencies.new
+    deps = CKick::CompilerSettings.new
 
     deps.add_include(mock)
     expect(deps.to_hash[:include].size).to eq(1)
@@ -203,7 +203,7 @@ describe CKick::Dependencies, '#add_include' do
     mock2 = instance_double("CKick::IncludePath")
     expect(mock2).to receive(:is_a?).with(CKick::IncludePath).and_return true
     expect(mock2).to receive(:to_hash_element).and_return "mock2"
-    deps = CKick::Dependencies.new
+    deps = CKick::CompilerSettings.new
 
     deps.add_include(mock)
     expect(deps.to_hash[:include].size).to eq(1)
@@ -212,23 +212,23 @@ describe CKick::Dependencies, '#add_include' do
   end
 end
 
-describe CKick::Dependencies, '#add_lib' do
+describe CKick::CompilerSettings, '#add_lib' do
   it "raises when input is not a CKick::LibraryPath" do
-    expect {CKick::Dependencies.new().add_lib(1)}.to raise_error CKick::BadLibraryPathError
+    expect {CKick::CompilerSettings.new().add_lib(1)}.to raise_error CKick::BadLibraryPathError
   end
 
   it "does not raise when input is a CKick::LibraryPath" do
     mock = instance_double("CKick::LibraryPath")
     expect(mock).to receive(:is_a?).with(CKick::LibraryPath).and_return true
 
-    expect {CKick::Dependencies.new().add_lib(mock)}.not_to raise_error
+    expect {CKick::CompilerSettings.new().add_lib(mock)}.not_to raise_error
   end
 
   it "does not append include path when path already inside" do
     mock = instance_double("CKick::LibraryPath")
     expect(mock).to receive(:is_a?).twice.with(CKick::LibraryPath).and_return true
     expect(mock).to receive(:to_hash_element).twice.and_return "mock"
-    deps = CKick::Dependencies.new
+    deps = CKick::CompilerSettings.new
 
     deps.add_lib(mock)
     expect(deps.to_hash[:lib].size).to eq(1)
@@ -243,7 +243,7 @@ describe CKick::Dependencies, '#add_lib' do
     mock2 = instance_double("CKick::LibraryPath")
     expect(mock2).to receive(:is_a?).with(CKick::LibraryPath).and_return true
     expect(mock2).to receive(:to_hash_element).and_return "mock2"
-    deps = CKick::Dependencies.new
+    deps = CKick::CompilerSettings.new
 
     deps.add_lib(mock)
     expect(deps.to_hash[:lib].size).to eq(1)
@@ -252,8 +252,8 @@ describe CKick::Dependencies, '#add_lib' do
   end
 end
 
-describe CKick::Dependencies, '#to_hash' do
+describe CKick::CompilerSettings, '#to_hash' do
   it "does not output empty values" do
-    expect(CKick::Dependencies.new().to_hash.keys).not_to include([])
+    expect(CKick::CompilerSettings.new().to_hash.keys).not_to include([])
   end
 end

@@ -108,12 +108,12 @@ module CKick
       @parent_dir = parent_dir
     end
 
-    # TODO doc + specs
+    # TODO: specs and doc
     def add_to_source(*source_files)
       source_files.each { |source_file| @source << source_file }
     end
 
-    # TODO doc + specs
+    # TODO: specs and doc
     def add_link(library_link)
       raise "argument is no CKick::LibraryLink" unless library_link.is_a?(LibraryLink)
       @libs << library_link
