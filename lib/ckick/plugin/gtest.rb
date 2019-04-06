@@ -43,3 +43,14 @@ class GTest < CKick::Plugin
     res
   end
 end
+
+module CKick
+  class ConfigurationBuilder
+    def gtest_executable(name, source, args={}, &block)
+      args[:is_test] = true
+      args[:libs] = ["${GTEST_LIBRARIES}"]
+      args[:dependencies] = ["${GTEST_TARGET}"]
+      executable(name, source, args, &block)
+    end
+  end
+end
